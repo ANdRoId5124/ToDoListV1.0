@@ -4,12 +4,9 @@ import entity.ToDoList;
 public class Main {
     public static void main(String[] args) {
         ToDoListRepository toDoListRepository = new ToDoListRepository();
-        ToDoList t = new ToDoList();
-        //ToDoListRepository.showLists();
+        ToDoListRepository.menuOfToDoListRepository(toDoListRepository);
 
-        System.out.println(ToDoListRepository.findMaxId());
-        //toDoListRepository.chooseToDoList();
-        //  ToDoListRepository.showLists();
+
     }
 
 }

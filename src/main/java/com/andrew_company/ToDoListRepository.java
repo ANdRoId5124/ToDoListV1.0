@@ -9,7 +9,49 @@ import java.util.Scanner;
 public class ToDoListRepository {
     public static ArrayList<ToDoList> lists = new ArrayList<>();
 
-    public static int findMaxId(){
+    public void addTaskToToDoList(){
+        Scanner sc = new Scanner(System.in);
+        int id = (ToDoList.findMaxIdOfTask() + 1);
+        System.out.println("Write your task: ");
+        String task = sc.nextLine();
+        try {
+            Connection conn = DriverManager.getConnection(DataBaseConfig.URL,
+                    DataBaseConfig.USER, DataBaseConfig.PASSWORD);
+            Statement stmn = conn.createStatement();
+            PreparedStatement stm =
+                    conn.prepareStatement(" INSERT INTO tasks VALUES (?,?);");
+            stm.setInt(1, id);
+            stm.setString(2, task);
+            stm.execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+    public static int writeNumberOfId() {
+        Scanner sc = new Scanner(System.in);
+        int digit;
+        while (true) {
+            System.out.println("Write number of id: ");
+            digit = sc.nextInt();
+            if (ToDoListRepository.checkInterval(digit) == true) {
+                return digit;
+            } else {
+                System.out.println("We do not have this number of id, Please try again!");
+                continue;
+            }
+        }
+    }
+
+    public static boolean checkInterval(int digit) {
+        boolean result = true;
+        if (digit >= 1 && digit <= ToDoListRepository.findMaxId()) {
+        } else {
+            result = false;
+        }
+        return result;
+    }
+
+    public static int findMaxId() {
         int maxId = 0;
         Connection con;
         try {
@@ -17,7 +59,7 @@ public class ToDoListRepository {
                     DataBaseConfig.PASSWORD);
             Statement stmt = con.createStatement();
             ResultSet rs = stmt.executeQuery("SELECT MAX(list_id) AS max_id FROM to_do_lists");
-            if(rs.next()){
+            if (rs.next()) {
                 maxId = rs.getInt("max_id");
             }
 
@@ -28,7 +70,7 @@ public class ToDoListRepository {
     }
 
     public static boolean checkIsEmpty() {
-        boolean result = true;
+        boolean result = false;
         Connection con;
         try {
             con = DriverManager.getConnection(DataBaseConfig.URL, DataBaseConfig.USER,
@@ -36,8 +78,8 @@ public class ToDoListRepository {
             Statement stmt = con.createStatement();
             ResultSet rs = stmt.executeQuery("SELECT * FROM to_do_lists;");
             if (rs.next() == false) {
-                System.out.println("ToDoList is not excist! Please add task");
-                result = false;
+                System.out.println("ToDoList is not excist! Please add ToDoList");
+                result = true;
                 con.close();
             }
         } catch (SQLException e) {
@@ -57,28 +99,45 @@ public class ToDoListRepository {
         return result;
     }
 
-    public static void showLists() {
-
-        Connection con;
-        try {
-            con = DriverManager.getConnection(DataBaseConfig.URL, DataBaseConfig.USER,
-                    DataBaseConfig.PASSWORD);
-            Statement stmt = con.createStatement();
-            ResultSet rs = stmt.executeQuery("SELECT * FROM to_do_lists LEFT JOIN tasks USING(list_id);");
-            while (rs.next()) {
-                System.out.println( rs.getInt("list_id") +" "+
-                rs.getString("name") +" "+
-                rs.getString("topic") +" "+
-                rs.getString("task") +" "+
-                rs.getString("condition"));
-
+    public static void showLists(ArrayList<ToDoList> lists){
+        for(ToDoList list: lists){
+            System.out.print(list.getId() + " " +
+                    list.getName() + " ");
+            for(String str : list.getTasks()){
+                System.out.print(str);
+                System.out.println();
             }
-
-        } catch (Exception e) {
-            e.printStackTrace();
         }
+    }
 
+    public ArrayList<ToDoList> getall() {
+        ArrayList<ToDoList> lists = new ArrayList<>();
+        if (ToDoListRepository.checkIsEmpty() == true) {
+        } else {
+            Connection con;
+            try {
+                con = DriverManager.getConnection(DataBaseConfig.URL, DataBaseConfig.USER,
+                        DataBaseConfig.PASSWORD);
+                Statement stmt = con.createStatement();
+                ResultSet rs = stmt.executeQuery("SELECT a.list_id, a.name, a.topic, string_agg(b.task, ', ') AS task\n" +
+                        "FROM to_do_lists a\n" +
+                        "INNER JOIN tasks b USING (list_id)\n" +
+                        "GROUP BY a.list_id, a.name;");
+                while (rs.next()) {
+                    ToDoList list = new ToDoList();
+                    list.setTasks(new ArrayList<>());
+                    list.setId(rs.getInt("list_id"));
+                    list.setName(rs.getString("name"));
+                    list.setTopic(rs.getString("topic"));
+                     list.addTasksToTaskList(rs.getString("task"));
+                     lists.add(list);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
+        return lists;
+    }
 
 
     public static int writeDigit() {
@@ -120,7 +179,7 @@ public class ToDoListRepository {
                     DataBaseConfig.PASSWORD);
             Statement stmt = con.createStatement();
             System.out.println("Write the name of list: ");
-            String name = sc.next();
+            String name = sc.nextLine();
             System.out.println("Write the topic: ");
             String topic = sc.next();
             PreparedStatement stm =
@@ -132,16 +191,17 @@ public class ToDoListRepository {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        ToDoList list = new ToDoList();
-        list.addTask();
+        ToDoListRepository list = new ToDoListRepository();
+        list.addTaskToToDoList();
         System.out.println("List is added");
     }
 
     public void deleteList() {
+        ToDoListRepository toDoListRepository = new ToDoListRepository();
         Scanner sc = new Scanner(System.in);
-        if (ToDoListRepository.checkIsEmpty() == false) {
+        if (ToDoListRepository.checkIsEmpty() == true) {
         } else {
-            ToDoListRepository.showLists();
+            ToDoListRepository.showLists(toDoListRepository.getall());
             Connection con;
             try {
                 con = DriverManager.getConnection(DataBaseConfig.URL, DataBaseConfig.USER,
@@ -164,26 +224,25 @@ public class ToDoListRepository {
 
 
     public void chooseToDoList() {
+        ToDoListRepository toDoListRepository = new ToDoListRepository();
         ToDoList toDoList = new ToDoList();
         toDoList.setTasks(new ArrayList<>());
         String task;
         Scanner sc = new Scanner(System.in);
-        if (ToDoListRepository.checkIsEmpty() == false) {
+        if (ToDoListRepository.checkIsEmpty() == true) {
         } else {
-            ToDoListRepository.showLists();
+            ToDoListRepository.showLists(toDoListRepository.getall());
             Connection con;
             try {
                 con = DriverManager.getConnection(DataBaseConfig.URL, DataBaseConfig.USER,
                         DataBaseConfig.PASSWORD);
                 Statement stmt = con.createStatement();
-                System.out.println("Choose the number of id of ToDoList to choose ToDoList");
-                int idOfListToChoose = ToDoListRepository.writeDigit();
                 PreparedStatement stm =
                         con.prepareStatement
-                               ("SELECT * FROM to_do_lists LEFT JOIN tasks USING (list_id) WHERE list_id = ?;");
-                stm.setInt(1,idOfListToChoose);
+                                ("SELECT * FROM to_do_lists LEFT JOIN tasks USING (list_id) WHERE list_id = ?;");
+                stm.setInt(1, ToDoListRepository.writeNumberOfId());
                 ResultSet resultSet = stm.executeQuery();
-                while(resultSet.next()){
+                while (resultSet.next()) {
                     toDoList.setId(resultSet.getInt("list_id"));
                     toDoList.setName((resultSet.getString("name")));
                     toDoList.setTopic(resultSet.getString("topic"));
@@ -195,17 +254,15 @@ public class ToDoListRepository {
                 e.printStackTrace();
             }
             ToDoList.menuOfToDoList(toDoList);
-
         }
     }
-}
 
-   /* public static void menuOfToDoListRepository(ToDoListRepository repository) {
+    public static void menuOfToDoListRepository(ToDoListRepository repository) {
         while (true) {
             int menuDigit = ToDoListRepository.writeDigitForMenu();
             switch (menuDigit) {
                 case 1:
-                    ToDoListRepository.showLists();
+                    ToDoListRepository.showLists(repository.getall());
                     continue;
 
                 case 2:
@@ -224,5 +281,6 @@ public class ToDoListRepository {
                     return;
             }
         }
-    }*/
+    }
+}
 

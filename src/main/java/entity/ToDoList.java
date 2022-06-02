@@ -1,6 +1,7 @@
 package entity;
 
 import com.andrew_company.DataBaseConfig;
+import com.andrew_company.ToDoListRepository;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -68,6 +69,48 @@ public class ToDoList {
         return topic;
     }
 
+    public static int writeNumberOfId() {
+        Scanner sc = new Scanner(System.in);
+        int digit;
+        while (true) {
+            System.out.println("Write number of id: ");
+            digit = sc.nextInt();
+            if (ToDoList.checkIntervalOfTaskID(digit) == true) {
+                return digit;
+            } else {
+                System.out.println("We do not have this number of id, Please try again!");
+                continue;
+            }
+        }
+    }
+
+    public static boolean checkIntervalOfTaskID(int digit) {
+        boolean result = true;
+        if (digit >= 1 && digit <= ToDoList.findMaxIdOfTask()) {
+        } else {
+            result = false;
+        }
+        return result;
+    }
+
+    public static int findMaxIdOfTask() {
+        int maxId = 0;
+        Connection con;
+        try {
+            con = DriverManager.getConnection(DataBaseConfig.URL, DataBaseConfig.USER,
+                    DataBaseConfig.PASSWORD);
+            Statement stmt = con.createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT MAX(list_id) AS max_id FROM tasks");
+            if (rs.next()) {
+                maxId = rs.getInt("max_id");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return maxId;
+    }
+
     public static void showTasks() {
         Connection con;
         try {
@@ -87,7 +130,7 @@ public class ToDoList {
     }
 
     public static boolean checkIsEmpty() {
-        boolean result = true;
+        boolean result = false;
         Connection con;
         try {
             con = DriverManager.getConnection(DataBaseConfig.URL, DataBaseConfig.USER,
@@ -96,7 +139,7 @@ public class ToDoList {
             ResultSet rs = stmt.executeQuery("SELECT * FROM tasks;");
             if (rs.next() == false) {
                 System.out.println("Tasks is empty! Please add task");
-                result = false;
+                result = true;
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -106,10 +149,9 @@ public class ToDoList {
 
     public void addTask() {
         Scanner sc = new Scanner(System.in);
-        System.out.println("Write ToDoList id: ");
-        int id = sc.nextInt();
+        int id = ToDoList.writeNumberOfId();
         System.out.println("Write task to add: ");
-        String task = sc.next();
+        String task = sc.nextLine();
         try {
             Connection conn = DriverManager.getConnection(DataBaseConfig.URL,
                     DataBaseConfig.USER, DataBaseConfig.PASSWORD);
@@ -133,10 +175,10 @@ public class ToDoList {
             con = DriverManager.getConnection(DataBaseConfig.URL, DataBaseConfig.USER,
                     DataBaseConfig.PASSWORD);
             Statement stmt = con.createStatement();
-            if (ToDoList.checkIsEmpty() == false) {
+            if (ToDoList.checkIsEmpty() == true) {
             } else {
                 ToDoList.showTasks();
-                System.out.println("Write idOfTask to delete: ");
+                System.out.println("Write id of task to delete: ");
                 int id = sc.nextInt();
                 System.out.println("Write name of task ");
                 String nameOfTask = sc.next();
@@ -155,7 +197,7 @@ public class ToDoList {
 
     public void refactorTask() {
         Scanner sc = new Scanner(System.in);
-        if (ToDoList.checkIsEmpty() == false) {
+        if (ToDoList.checkIsEmpty() == true) {
         } else {
             ToDoList.showTasks();
             Connection con;
@@ -166,7 +208,7 @@ public class ToDoList {
                 System.out.println("Write id of task to refactor: ");
                 int idOfTask = sc.nextInt();
                 System.out.println("Write the name of task to refactor");
-                String nameOfTask = sc.next();
+                String nameOfTask = sc.nextLine();
                 System.out.println("Write changed task");
                 String changedTask = sc.next();
                 PreparedStatement stm =
@@ -186,7 +228,7 @@ public class ToDoList {
     public void markAsActive() {
         Scanner sc = new Scanner(System.in);
         String condition = "active";
-        if (ToDoList.checkIsEmpty() == false) {
+        if (ToDoList.checkIsEmpty() == true) {
         } else {
             ToDoList.showTasks();
 
@@ -198,7 +240,7 @@ public class ToDoList {
                 System.out.println("Write id of task: ");
                 int id = sc.nextInt();
                 System.out.println("Write task to mark as \"active\": ");
-                String nameOfTask = sc.next();
+                String nameOfTask = sc.nextLine();
                 PreparedStatement stm =
                         con.prepareStatement
                                 ("UPDATE tasks SET condition = ? WHERE list_id = ? and task = ?;");
@@ -218,7 +260,7 @@ public class ToDoList {
     public void markAsComplite() {
         Scanner sc = new Scanner(System.in);
         String condition = "complite";
-        if (ToDoList.checkIsEmpty() == false) {
+        if (ToDoList.checkIsEmpty() == true) {
         } else {
             ToDoList.showTasks();
 
@@ -230,7 +272,7 @@ public class ToDoList {
                 System.out.println("Write id of task: ");
                 int id = sc.nextInt();
                 System.out.println("Write task to mark as \"complite\": ");
-                String nameOfTask = sc.next();
+                String nameOfTask = sc.nextLine();
                 PreparedStatement stm =
                         con.prepareStatement
                                 ("UPDATE tasks SET condition = ? WHERE list_id = ? and task = ?;");
