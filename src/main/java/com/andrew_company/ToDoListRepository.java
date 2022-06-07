@@ -3,7 +3,7 @@ package com.andrew_company;
 import com.andrew_company.entity.Task;
 import com.andrew_company.entity.ToDoList;
 
-import java.util.ArrayList;
+
 import java.util.Scanner;
 
 public class ToDoListRepository {

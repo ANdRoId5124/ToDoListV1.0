@@ -160,18 +160,8 @@ public class ToDoList {
         return result;
     }
 
-    /*public static boolean IsContainsName(String name) {
-        boolean result = true;
-        for (ToDoList list : lists) {
-            if (list.getName().contains(name)) {
-            } else {
-                result = false;
-            }
-        }
-        return result;
-    }*/
 
-    public void showLists() {
+    public void showLists() { //Null pointer exception, if tasks empty!!
         ToDoList toDoList = new ToDoList();
         ArrayList<ToDoList> lists = toDoList.setTaskToToDoList();
         // try {
